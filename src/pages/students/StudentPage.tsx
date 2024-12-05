@@ -6,12 +6,14 @@ import SchedulePage from './Timetable'; // Import the Schedule Page component
 import GradePage from './Grades';
 import CoursePage from './CoursePage';
 import AssginmentPage from './AssignmentPage';
+import Feedback from './Feedback';
+
 import app from '../../App';
 
 const StudentPage = () => {
-  const [currentPage, setCurrentPage] = useState<'dashboard' | 'attendance' | 'schedule' | 'grades' | 'courses' | 'assignments'>('dashboard');
+  const [currentPage, setCurrentPage] = useState<'dashboard' | 'attendance' | 'schedule' | 'grades' | 'courses' | 'assignments' | 'feedback'>('dashboard');
 
-  const handlePageChange = (page: 'dashboard' | 'attendance' | 'schedule' | 'grades'| 'courses' | 'assignments') => {
+  const handlePageChange = (page: 'dashboard' | 'attendance' | 'schedule' | 'grades'| 'courses' | 'assignments' | 'feedback') => {
     setCurrentPage(page);
   };
   const handleLogout = () => {
@@ -35,6 +37,8 @@ const StudentPage = () => {
         {currentPage === 'grades' && <GradePage />}
         {currentPage === 'courses' && <CoursePage />}
         {currentPage === 'assignments' && <AssginmentPage />}
+        {currentPage === 'feedback' && <Feedback />}
+
 
       </div>
       <div className="fixed bottom-4 right-4">

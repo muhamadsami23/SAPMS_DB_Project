@@ -27,8 +27,6 @@ const adminSidebarItems = [
   { name: 'Teacher Record', icon: ClipboardList, page: 'Teacher Record' as Page },
   { name: 'Schedule Timetable', icon: Calendar, page: 'Schedule Timetable' as Page },
   { name: 'Exam Schedule', icon: FileText, page: 'Exam Schedule' as Page },
-  { name: 'Notifications', icon: Bell, page: 'dashboard' as Page }, // Placeholder page
-  { name: 'Settings', icon: Settings, page: 'dashboard' as Page }, // Placeholder page
 ];
 
 const AdminSidebar: React.FC<SidebarProps> = ({ onPageChange }) => {

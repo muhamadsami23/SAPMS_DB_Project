@@ -6,6 +6,8 @@ import TeacherRecordPage from './TeacherPage'; // Import the Teacher Record Page
 //import ScheduleTimetablePage from './ScheduleTimeTable.tsx'; // Import the Schedule Timetable Page component
 import ExamSchedulePage from './ExamSchedulePage'; // Import the Exam Schedule Page component
 
+import ScheduleTimeTable from './ScheduleTimeTable'; // Import the Exam Schedule Page component
+
 const AdminPage = () => {
   const [currentPage, setCurrentPage] = useState<
     'dashboard' | 'Student Record' | 'Teacher Record' | 'Schedule Timetable' | 'Exam Schedule'
@@ -34,6 +36,8 @@ const AdminPage = () => {
         {currentPage === 'dashboard' && <AdminDashboard />}
         {currentPage === 'Student Record' && <StudentRecordPage />}
         {currentPage === 'Teacher Record' && <TeacherRecordPage />}
+        {currentPage === 'Schedule Timetable' && <ScheduleTimeTable />}
+
         {currentPage === 'Exam Schedule' && <ExamSchedulePage />}
       </div>
 

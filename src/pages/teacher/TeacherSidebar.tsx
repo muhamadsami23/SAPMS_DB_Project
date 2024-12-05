@@ -24,12 +24,12 @@ const sidebarItems = [
   { name: 'Schedule', icon: Calendar, page: 'schedule' as Page },
   { name: 'Manage Grades', icon: BarChart2, page: 'grades' as Page },
   { name: 'Upload Assignments', icon: Briefcase, page: 'assignment' as Page },
-  { name: 'Notifications', icon: Bell, page: 'dashboard' as Page },
-  { name: 'Settings', icon: Settings, page: 'dashboard' as Page },
 ];
 
 const TeacherSidebar: React.FC<SidebarProps> = ({ onPageChange }) => {
   return (
+    <div className="flex h-screen">
+
     <div className="flex flex-col h-screen w-64 bg-gray-800 text-white sidebar">
       <div className="flex items-center justify-center h-16 bg-gray-900">
         <h1 className="text-2xl font-bold">Teacher Portal</h1>
@@ -51,6 +51,8 @@ const TeacherSidebar: React.FC<SidebarProps> = ({ onPageChange }) => {
       </nav>
       
     </div>
+    </div>
+
   );
 };
 

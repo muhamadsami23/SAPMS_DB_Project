@@ -1,299 +1,280 @@
 'use client'
 
-import React, { useState } from 'react'
-import { Book, Search, Edit2, Save, X, Upload, FileText, PenTool, Plus, Check } from 'lucide-react'
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { toast, Toaster } from 'react-hot-toast';
 
-type GradeType = 'assignment' | 'midterm' | 'final'
+interface Course {
+  course_id: number;
+  course_name: string;
+}
 
-interface Student {
-  id: number
-  name: string
+interface Section {
+  section_id: number;
+  section_name: string;
 }
 
 interface Assignment {
-  id: number
-  name: string
-  totalMarks: number
+  assignment_id: number;
+  description: string;
+  total_marks: number;
 }
 
-interface Grade {
-  studentId: number
-  assignmentId?: number
-  type: GradeType
-  marks: number
-  totalMarks: number
+interface StudentAssignment {
+  student_id: number;
+  name: string;
+  marks_obtained: number | null;
 }
 
-const students: Student[] = [
-  { id: 1, name: 'Alice Johnson' },
-  { id: 2, name: 'Bob Smith' },
-  { id: 3, name: 'Charlie Brown' },
-  { id: 4, name: 'David Lee' },
-  { id: 5, name: 'Eva Martinez' },
-]
+const ManageGradesPage: React.FC = () => {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [selectedCourse, setSelectedCourse] = useState<number | null>(null);
+  const [sections, setSections] = useState<Section[]>([]);
+  const [selectedSection, setSelectedSection] = useState<number | null>(null);
+  const [gradeType, setGradeType] = useState<'assignment' | 'quiz' | 'midterm' | 'finalterm' | null>(null);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [selectedAssignment, setSelectedAssignment] = useState<number | null>(null);
+  const [students, setStudents] = useState<StudentAssignment[]>([]);
 
-const initialAssignments: Assignment[] = [
-  { id: 1, name: 'Assignment 1', totalMarks: 100 },
-  { id: 2, name: 'Assignment 2', totalMarks: 50 },
-  { id: 3, name: 'Assignment 3', totalMarks: 75 },
-]
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const teacherId = sessionStorage.getItem('student_id');
+        const response = await axios.post('http://localhost:5002/teacher-courses', { teacher_id: teacherId });
+        setCourses(response.data);
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+        toast.error('Failed to fetch courses');
+      }
+    };
+    fetchCourses();
+  }, []);
 
-const initialGrades: Grade[] = [
-  { studentId: 1, assignmentId: 1, type: 'assignment', marks: 85, totalMarks: 100 },
-  { studentId: 2, assignmentId: 1, type: 'assignment', marks: 78, totalMarks: 100 },
-  { studentId: 1, type: 'midterm', marks: 88, totalMarks: 100 },
-  { studentId: 2, type: 'midterm', marks: 92, totalMarks: 100 },
-]
-
-export default function ManageGrades() {
-  const [grades, setGrades] = useState<Grade[]>(initialGrades)
-  const [assignments, setAssignments] = useState<Assignment[]>(initialAssignments)
-  const [activeTab, setActiveTab] = useState<GradeType>('assignment')
-  const [searchTerm, setSearchTerm] = useState('')
-  const [editingGrade, setEditingGrade] = useState<Grade | null>(null)
-  const [newAssignment, setNewAssignment] = useState<Assignment | null>(null)
-
-  const filteredStudents = students.filter(student =>
-    student.name.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-
-  const handleGradeChange = (studentId: number, assignmentId: number | undefined, type: GradeType, marks: number, totalMarks: number) => {
-    const updatedGrades = grades.map(grade => 
-      (grade.studentId === studentId && grade.assignmentId === assignmentId && grade.type === type)
-        ? { ...grade, marks, totalMarks }
-        : grade
-    )
-    if (!updatedGrades.some(grade => grade.studentId === studentId && grade.assignmentId === assignmentId && grade.type === type)) {
-      updatedGrades.push({ studentId, assignmentId, type, marks, totalMarks })
+  useEffect(() => {
+    if (selectedCourse) {
+      const fetchSections = async () => {
+        try {
+          const response = await axios.post('http://localhost:5002/course-sections', { course_id: selectedCourse });
+          setSections(response.data);
+        } catch (error) {
+          console.error('Error fetching sections:', error);
+          toast.error('Failed to fetch sections');
+        }
+      };
+      fetchSections();
     }
-    setGrades(updatedGrades)
-  }
+  }, [selectedCourse]);
 
-  const handleSave = () => {
-    if (editingGrade) {
-      handleGradeChange(editingGrade.studentId, editingGrade.assignmentId, editingGrade.type, editingGrade.marks, editingGrade.totalMarks)
-      setEditingGrade(null)
+  const handleCourseChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedCourse(Number(event.target.value));
+    setSelectedSection(null);
+    setGradeType(null);
+    setSelectedAssignment(null);
+    setAssignments([]);
+    setStudents([]);
+  };
+
+  const handleSectionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedSection(Number(event.target.value));
+    setGradeType(null);
+    setSelectedAssignment(null);
+    setAssignments([]);
+    setStudents([]);
+  };
+
+  const handleGradeTypeChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedGradeType = event.target.value as 'assignment' | 'quiz' | 'midterm' | 'finalterm';
+    setGradeType(selectedGradeType);
+    setSelectedAssignment(null);
+    setStudents([]);
+
+    if (selectedGradeType === 'assignment' && selectedCourse) {
+      try {
+        const response = await axios.post('http://localhost:5002/assignments-grading', { course_id: selectedCourse });
+        setAssignments(response.data);
+      } catch (error) {
+        console.error('Error fetching assignments:', error);
+        toast.error('Failed to fetch assignments');
+      }
     }
-  }
+  };
 
-  const handleAddAssignment = () => {
-    if (newAssignment) {
-      setAssignments([...assignments, { ...newAssignment, id: assignments.length + 1 }])
-      setNewAssignment(null)
+  const handleAssignmentChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const assignmentId = Number(event.target.value);
+    setSelectedAssignment(assignmentId);
+
+    try {
+      const response = await axios.post('http://localhost:5002/assignment-students', { assignment_id: assignmentId });
+      setStudents(response.data);
+    } catch (error) {
+      console.error('Error fetching student assignments:', error);
+      toast.error('Failed to fetch student assignments');
     }
-  }
+  };
 
-  const renderAssignmentGrades = () => (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-teal-600">
-          <tr>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Student</th>
-            {assignments.map(assignment => (
-              <th key={assignment.id} scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                {assignment.name}
-              </th>
+  const handleGradeChange = (studentId: number, marksObtained: number) => {
+    setStudents(prevStudents =>
+      prevStudents.map(student =>
+        student.student_id === studentId ? { ...student, marks_obtained: marksObtained } : student
+      )
+    );
+  };
+
+  const saveGrades = async () => {
+    if (!selectedAssignment || !selectedCourse) return;
+  
+    try {
+      const gradesToSave = students.map(student => ({
+        student_id: student.student_id,
+        assignment_id: selectedAssignment,
+        marks_obtained: student.marks_obtained,
+      }));
+  
+      const response = await axios.post('http://localhost:5002/insert-assignment', {
+        course_id: selectedCourse,
+        grades: gradesToSave,
+      });
+  
+      if (response.status === 200) {
+        toast.success('Grades saved successfully');
+      } else {
+        toast.error('Failed to save grades');
+      }
+    } catch (error) {
+      console.error('Error saving grades:', error);
+      toast.error('Failed to save grades');
+    }
+  };
+  
+
+  return (
+    <div className="container mx-auto p-4">
+      <Toaster position="top-right" />
+      <h1 className="text-3xl font-bold mb-6 text-gray-800">Manage Grades</h1>
+      <div className="mb-6">
+        <label htmlFor="course" className="block mb-2 text-sm font-medium text-gray-700">Select Course:</label>
+        <select
+          id="course"
+          className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+          onChange={handleCourseChange}
+          value={selectedCourse || ''}
+        >
+          <option value="">Select a course</option>
+          {courses.map(course => (
+            <option key={course.course_id} value={course.course_id}>
+              {course.course_name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {selectedCourse && (
+        <div className="mb-6">
+          <label htmlFor="section" className="block mb-2 text-sm font-medium text-gray-700">Select Section:</label>
+          <select
+            id="section"
+            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            onChange={handleSectionChange}
+            value={selectedSection || ''}
+          >
+            <option value="">Select a section</option>
+            {sections.map(section => (
+              <option key={section.section_id} value={section.section_id}>
+                {section.section_name}
+              </option>
             ))}
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-              <button
-                onClick={() => setNewAssignment({ id: 0, name: `Assignment ${assignments.length + 1}`, totalMarks: 100 })}
-                className="text-white hover:text-teal-200 focus:outline-none"
-                aria-label="Add new assignment"
-              >
-                <Plus size={18} />
-              </button>
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {filteredStudents.map(student => (
-            <tr key={student.id} className="hover:bg-teal-50 transition-colors duration-150 ease-in-out">
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{student.name}</td>
-              {assignments.map(assignment => {
-                const grade = grades.find(g => g.studentId === student.id && g.assignmentId === assignment.id && g.type === 'assignment')
-                return (
-                  <td key={assignment.id} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          </select>
+        </div>
+      )}
+
+      {selectedSection && (
+        <div className="mb-6">
+          <label htmlFor="gradeType" className="block mb-2 text-sm font-medium text-gray-700">Select Grade Type:</label>
+          <select
+            id="gradeType"
+            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            onChange={handleGradeTypeChange}
+            value={gradeType || ''}
+          >
+            <option value="">Select grade type</option>
+            <option value="assignment">Assignment</option>
+            <option value="quiz">Quiz</option>
+            <option value="midterm">Midterm</option>
+            <option value="finalterm">Finalterm</option>
+          </select>
+        </div>
+      )}
+
+      {gradeType === 'assignment' && assignments.length > 0 && (
+        <div className="mb-6">
+          <label htmlFor="assignment" className="block mb-2 text-sm font-medium text-gray-700">Select Assignment:</label>
+          <select
+            id="assignment"
+            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            onChange={handleAssignmentChange}
+            value={selectedAssignment || ''}
+          >
+            <option value="">Select an assignment</option>
+            {assignments.map(assignment => (
+              <option key={assignment.assignment_id} value={assignment.assignment_id}>
+                {assignment.description} (Total Marks: {assignment.total_marks})
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {students.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-3">Student Grades</h3>
+          <table className="w-full border-collapse border border-gray-300">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border border-gray-300 p-2">Student ID</th>
+                <th className="border border-gray-300 p-2">Name</th>
+                <th className="border border-gray-300 p-2">Marks Obtained</th>
+                <th className="border border-gray-300 p-2">Total Marks</th>
+              </tr>
+            </thead>
+            <tbody>
+              {students.map((student) => (
+                <tr key={student.student_id}>
+                  <td className="border border-gray-300 p-2">{student.student_id}</td>
+                  <td className="border border-gray-300 p-2">{student.name}</td>
+                  <td className="border border-gray-300 p-2">
                     <input
                       type="number"
-                      value={grade ? grade.marks : ''}
-                      onChange={(e) => handleGradeChange(student.id, assignment.id, 'assignment', Number(e.target.value), assignment.totalMarks)}
-                      className="w-16 mr-2 border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
-                      min="0"
-                      max={assignment.totalMarks}
-                      aria-label={`${student.name}'s marks for ${assignment.name}`}
+                      className="w-full p-1 border border-gray-300 rounded-md"
+                      value={student.marks_obtained || ''}
+                      onChange={(e) =>
+                        handleGradeChange(student.student_id, parseFloat(e.target.value) || 0)
+                      }
+                      placeholder="Marks Obtained"
                     />
-                    <span className="text-gray-400">/ {assignment.totalMarks}</span>
                   </td>
-                )
-              })}
-              {newAssignment && (
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <input
-                    type="number"
-                    className="w-16 mr-2 border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
-                    min="0"
-                    max={newAssignment.totalMarks}
-                    aria-label={`${student.name}'s marks for new assignment`}
-                  />
-                  <span className="text-gray-400">/ {newAssignment.totalMarks}</span>
-                </td>
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {newAssignment && (
-        <div className="mt-4 flex items-center space-x-4">
-          <input
-            type="text"
-            value={newAssignment.name}
-            onChange={(e) => setNewAssignment({ ...newAssignment, name: e.target.value })}
-            className="border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
-            placeholder="Assignment name"
-          />
-          <input
-            type="number"
-            value={newAssignment.totalMarks}
-            onChange={(e) => setNewAssignment({ ...newAssignment, totalMarks: Number(e.target.value) })}
-            className="w-20 border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
-            placeholder="Total marks"
-            min="1"
-          />
+                  <td className="border border-gray-300 p-2">
+                    {assignments.find(a => a.assignment_id === selectedAssignment)?.total_marks || '-'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {students.length > 0 && (
+        <div className="mb-6">
           <button
-            onClick={handleAddAssignment}
-            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
+            onClick={saveGrades}
+            className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-700"
           >
-            <Check size={18} className="mr-1" />
-            Add
+            Save Grades
           </button>
         </div>
       )}
     </div>
-  )
+  );
+};
 
-  const renderExamGrades = (type: 'midterm' | 'final') => (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-teal-600">
-          <tr>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Student</th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Marks</th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {filteredStudents.map(student => {
-            const grade = grades.find(g => g.studentId === student.id && g.type === type)
-            return (
-              <tr key={student.id} className="hover:bg-teal-50 transition-colors duration-150 ease-in-out">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{student.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {editingGrade && editingGrade.studentId === student.id && editingGrade.type === type ? (
-                    <>
-                      <input
-                        type="number"
-                        value={editingGrade.marks}
-                        onChange={(e) => setEditingGrade({ ...editingGrade, marks: Number(e.target.value) })}
-                        className="w-16 mr-2 border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
-                        min="0"
-                        max={editingGrade.totalMarks}
-                        aria-label={`${student.name}'s ${type} marks`}
-                      />
-                      <span className="text-gray-400">/ </span>
-                      <input
-                        type="number"
-                        value={editingGrade.totalMarks}
-                        onChange={(e) => setEditingGrade({ ...editingGrade, totalMarks: Number(e.target.value) })}
-                        className="w-16 border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
-                        min="1"
-                        aria-label={`${student.name}'s ${type} total marks`}
-                      />
-                    </>
-                  ) : (
-                    grade ? `${grade.marks} / ${grade.totalMarks}` : '-'
-                  )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  {editingGrade && editingGrade.studentId === student.id && editingGrade.type === type ? (
-                    <>
-                      <button onClick={handleSave} className="text-teal-600 hover:text-teal-900 mr-2" aria-label="Save changes">
-                        <Save size={18} />
-                      </button>
-                      <button onClick={() => setEditingGrade(null)} className="text-red-600 hover:text-red-900" aria-label="Cancel changes">
-                        <X size={18} />
-                      </button>
-                    </>
-                  ) : (
-                    <button 
-                      onClick={() => setEditingGrade({ 
-                        studentId: student.id, 
-                        type, 
-                        marks: grade ? grade.marks : 0, 
-                        totalMarks: grade ? grade.totalMarks : 100 
-                      })} 
-                      className="text-indigo-600 hover:text-indigo-900"
-                      aria-label={`Edit ${student.name}'s ${type} marks`}
-                    >
-                      <Edit2 size={18} />
-                    </button>
-                  )}
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-    </div>
-  )
+export default ManageGradesPage;
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-teal-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-extrabold text-center text-teal-900 mb-12">
-          <Book className="inline-block mr-2 mb-1" size={36} />
-          Manage Grades
-        </h1>
-        <div className="mb-8 flex justify-between items-center">
-          <div className="relative w-64">
-            <input
-              type="text"
-              placeholder="Search students"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500"
-            />
-            <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
-          </div>
-          <div className="flex space-x-4">
-            <button
-              onClick={() => setActiveTab('assignment')}
-              className={`px-4 py-2 rounded-md ${activeTab === 'assignment' ? 'bg-teal-600 text-white' : 'bg-white text-teal-600'}`}
-            >
-              <FileText className="inline-block mr-2 mb-1" size={18} />
-              Assignments
-            </button>
-            <button
-              onClick={() => setActiveTab('midterm')}
-              className={`px-4 py-2 rounded-md ${activeTab === 'midterm' ? 'bg-teal-600 text-white' : 'bg-white text-teal-600'}`}
-            >
-              <PenTool className="inline-block mr-2 mb-1" size={18} />
-              Mid-term
-            </button>
-            <button
-              onClick={() => setActiveTab('final')}
-              className={`px-4 py-2 rounded-md ${activeTab === 'final' ? 'bg-teal-600 text-white' : 'bg-white text-teal-600'}`}
-            >
-              <Upload className="inline-block mr-2 mb-1" size={18} />
-              Final
-            </button>
-          </div>
-        </div>
-        <div className="bg-white shadow-md rounded-lg overflow-hidden">
-          {activeTab === 'assignment' && renderAssignmentGrades()}
-          {activeTab === 'midterm' && renderExamGrades('midterm')}
-          {activeTab === 'final' && renderExamGrades('final')}
-        </div>
-      </div>
-    </div>
-  )
-}

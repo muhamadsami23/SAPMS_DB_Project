@@ -12,7 +12,7 @@ import {
   LogOut,
 } from 'lucide-react';
 
-type Page = 'dashboard' | 'attendance' | 'schedule' | 'grades' | 'courses' |'assignments';
+type Page = 'dashboard' | 'attendance' | 'schedule' | 'grades' | 'courses' |'assignments' | 'feedback';
 
 interface SidebarProps {
   onPageChange: (page: Page) => void;
@@ -24,10 +24,8 @@ const sidebarItems = [
   { name: 'Schedule', icon: Calendar, page: 'schedule' as Page },
   { name: 'Grades', icon: BarChart2, page: 'grades' as Page },
   { name: 'Courses', icon: BookOpen, page: 'courses' as Page },
-  { name: 'Teachers', icon: Users, page: 'dashboard' as Page },
   { name: 'Assignments', icon: Briefcase, page: 'assignments' as Page },
-  { name: 'Transcript', icon: BookOpen, page: 'transcript' as Page },
-  { name: 'Notifications', icon: Bell, page: 'dashboard' as Page },
+  { name: 'feedback', icon: BookOpen, page: 'feedback' as Page },
   { name: 'Settings', icon: Settings, page: 'dashboard' as Page },
 ];
 

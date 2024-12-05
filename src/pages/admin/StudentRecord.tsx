@@ -1,39 +1,85 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Trash2, Edit, Eye } from 'lucide-react'
 
 // Define the structure of a student record
 interface Student {
-  id: number
+  student_id: number
   name: string
-  email: string
-  grade: string
-  major: string
+  semester: number
+  program_name: string
+
 }
 
-// Sample student data
-const initialStudents: Student[] = [
-  { id: 1, name: "John Doe", email: "john@example.com", grade: "A", major: "Computer Science" },
-  { id: 2, name: "Jane Smith", email: "jane@example.com", grade: "B", major: "Mathematics" },
-  { id: 3, name: "Bob Johnson", email: "bob@example.com", grade: "C", major: "Physics" },
-]
-
 export default function StudentRecords() {
-  const [students, setStudents] = useState<Student[]>(initialStudents)
+  const [students, setStudents] = useState<Student[]>([])
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
-  const handleDelete = (id: number) => {
-    setStudents(students.filter(student => student.id !== id))
-  }
+  // Fetch students from the backend API
+  useEffect(() => {
+    // Make sure to replace with your backend API endpoint
+    fetch('http://localhost:5002/students')
+      .then(response => response.json())
+      .then(data => {
+        setStudents(data) // Update the state with fetched students
+      })
+      .catch(error => {
+        console.error('Error fetching students:', error)
+      })
+  }, []) // Run only once when the component mounts
+  const handleDelete = (student_id: number) => {
+    fetch('http://localhost:5002/students-del', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ student_id }),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          // Attempt to parse the error as JSON
+          return response.json().then(
+            (errorData) => {
+              throw new Error(errorData.message || 'An error occurred');
+            },
+            () => {
+              // If parsing fails, throw the raw response text
+              throw new Error('An unexpected error occurred while deleting the student.');
+            }
+          );
+        }
+        setStudents(students.filter((student) => student.student_id !== student_id));
+      })
+      .catch((error) => {
+        console.error('Error deleting student:', error.message);
+      });
+  };
+  
+  
 
+  
   const handleUpdate = (updatedStudent: Student) => {
-    setStudents(students.map(student => 
-      student.id === updatedStudent.id ? updatedStudent : student
-    ))
-    setIsEditModalOpen(false)
+    // Send a PUT request to the backend to update the student
+    fetch(`http://localhost:5002/students/${updatedStudent.student_id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updatedStudent),
+    })
+      .then(response => response.json())
+      .then(updatedStudent => {
+        setStudents(students.map(student => 
+          student.student_id === updatedStudent.id ? updatedStudent : student
+        ))
+        setIsEditModalOpen(false) // Close the edit modal after update
+      })
+      .catch(error => {
+        console.error('Error updating student:', error)
+      })
   }
 
   const handleView = (student: Student) => {
@@ -54,19 +100,19 @@ export default function StudentRecords() {
           <thead className="bg-gray-100">
             <tr>
               <th className="py-2 px-4 text-left">Name</th>
-              <th className="py-2 px-4 text-left">Email</th>
-              <th className="py-2 px-4 text-left">Grade</th>
-              <th className="py-2 px-4 text-left">Major</th>
+              <th className="py-2 px-4 text-left">Semester</th>
+              <th className="py-2 px-4 text-left">id</th>
+              <th className="py-2 px-4 text-left">PROGRAM</th>
               <th className="py-2 px-4 text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
             {students.map((student) => (
-              <tr key={student.id} className="border-b hover:bg-gray-50">
+              <tr key={student.student_id} className="border-b hover:bg-gray-50">
                 <td className="py-2 px-4">{student.name}</td>
-                <td className="py-2 px-4">{student.email}</td>
-                <td className="py-2 px-4">{student.grade}</td>
-                <td className="py-2 px-4">{student.major}</td>
+                <td className="py-2 px-4">{student.semester}</td>
+                <td className="py-2 px-4">{student.student_id}</td>
+                <td className="py-2 px-4">{student.program_name}</td>
                 <td className="py-2 px-4 space-x-2">
                   <button className="p-1 bg-blue-500 text-white rounded" onClick={() => handleView(student)}>
                     <Eye className="h-4 w-4" />
@@ -74,7 +120,7 @@ export default function StudentRecords() {
                   <button className="p-1 bg-green-500 text-white rounded" onClick={() => handleEdit(student)}>
                     <Edit className="h-4 w-4" />
                   </button>
-                  <button className="p-1 bg-red-500 text-white rounded" onClick={() => handleDelete(student.id)}>
+                  <button className="p-1 bg-red-500 text-white rounded" onClick={() => handleDelete(student.student_id)}>
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </td>
@@ -91,9 +137,9 @@ export default function StudentRecords() {
             <h2 className="text-xl font-bold mb-4">Student Information</h2>
             <div className="space-y-4">
               <p><strong>Name:</strong> {selectedStudent.name}</p>
-              <p><strong>Email:</strong> {selectedStudent.email}</p>
-              <p><strong>Grade:</strong> {selectedStudent.grade}</p>
-              <p><strong>Major:</strong> {selectedStudent.major}</p>
+              <p><strong>Semester:</strong> {selectedStudent.semester}</p>
+              <p><strong>ID:</strong> {selectedStudent.student_id}</p>
+              <p><strong>Program:</strong> {selectedStudent.program_name}</p>
             </div>
             <button 
               className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
@@ -131,31 +177,14 @@ export default function StudentRecords() {
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                 />
               </div>
+             
+            
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-                <input 
-                  id="email" 
-                  name="email" 
-                  type="email" 
-                  defaultValue={selectedStudent.email}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                />
-              </div>
-              <div>
-                <label htmlFor="grade" className="block text-sm font-medium text-gray-700">Grade</label>
-                <input 
-                  id="grade" 
-                  name="grade" 
-                  defaultValue={selectedStudent.grade}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                />
-              </div>
-              <div>
-                <label htmlFor="major" className="block text-sm font-medium text-gray-700">Major</label>
+                <label htmlFor="Program" className="block text-sm font-medium text-gray-700">Program</label>
                 <input 
                   id="major" 
                   name="major" 
-                  defaultValue={selectedStudent.major}
+                  defaultValue={selectedStudent.program_name}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                 />
               </div>
@@ -181,4 +210,3 @@ export default function StudentRecords() {
     </div>
   )
 }
-

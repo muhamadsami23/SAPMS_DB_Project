@@ -13,7 +13,9 @@
       "react-router-dom": ["node_modules/react-router-dom"],
       "framer-motion": ["node_modules/framer-motion/dist/framer-motion"],
       "axios": ["node_modules/axios/index"],
-      "date-fns": ["node_modules/date-fns/index"] // Added this line
+      "date-fns": ["node_modules/date-fns/index"],   // Added this line
+      "react-hot-toast": ["node_modules/react-hot-toast/dist/index.js"] // Added this line
+
     }
   },
   "include": ["src/**/*"]

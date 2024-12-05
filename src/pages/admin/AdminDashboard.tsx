@@ -1,184 +1,65 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Users, GraduationCap, Bell, ClipboardList, Calendar, Loader } from 'lucide-react';
+import React from 'react';
+import { Settings, UserCheck, BookOpen, ClipboardList, BarChart } from 'lucide-react';
 
 const AdminDashboard: React.FC = () => {
-  const [adminData, setAdminData] = useState<any>(null);
-  const [stats, setStats] = useState<any>({ students: 0, teachers: 0 });
-  const [notifications, setNotifications] = useState<string[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const adminId = sessionStorage.getItem('admin_id');
-
-  useEffect(() => {
-    if (adminId) {
-      setLoading(true);
-
-      // Fetch admin details
-      fetch('http://localhost:5002/admin', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ admin_id: adminId }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.error) {
-            setError(data.error);
-          } else {
-            setAdminData(data);
-          }
-        })
-        .catch(() => setError('Error fetching admin data'))
-        .finally(() => setLoading(false));
-
-      // Fetch statistics
-      fetch('http://localhost:5002/stats')
-        .then((response) => response.json())
-        .then((data) => setStats(data))
-        .catch(() => setError('Error fetching statistics'));
-
-      // Fetch notifications
-      fetch('http://localhost:5002/notifications')
-        .then((response) => response.json())
-        .then((data) => setNotifications(data))
-        .catch(() => setError('Error fetching notifications'));
-    }
-  }, [adminId]);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen bg-white">
-        <Loader className="w-12 h-12 text-blue-500 animate-spin" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex justify-center items-center h-screen bg-white">
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md shadow-md">
-          <p className="font-bold">Error</p>
-          <p>{error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  const fadeInUp = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.5 },
-  };
-
   return (
-    <div className="min-h-screen bg-white py-12 px-4 sm:px-6 lg:px-8">
-      <main className="max-w-7xl mx-auto">
-        {/* Welcome Section */}
-        <motion.h1
-          className="text-4xl font-bold text-gray-900 mb-4 text-center"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          Welcome, {adminData?.name}
-        </motion.h1>
+    <div className="p-6 max-w-7xl mx-auto">
+      {/* Welcome Admin Section */}
+      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-8 rounded-lg shadow-md mb-6">
+        <h1 className="text-4xl font-bold mb-2">Welcome, Admin!</h1>
+        <p className="text-lg">Manage the platform efficiently and streamline processes with ease.</p>
+      </div>
 
-        <motion.p
-          className="text-center text-gray-700 mb-12"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          {adminData?.designation} | {adminData?.email}
-        </motion.p>
-
-        {/* Admin Details */}
-        <motion.div
-          className="mb-12 p-6 bg-gray-50 rounded-lg shadow-md"
-          variants={fadeInUp}
-          initial="initial"
-          animate="animate"
-        >
-          <h2 className="text-2xl font-semibold text-gray-900 mb-4">Admin Details</h2>
-          <ul className="list-disc list-inside text-gray-700">
-            <li><strong>Name:</strong> {adminData?.name}</li>
-            <li><strong>Contact:</strong> {adminData?.contact}</li>
-            <li><strong>Date of Birth:</strong> {adminData?.dob}</li>
-            <li><strong>Address:</strong> {adminData?.address}</li>
-          </ul>
-        </motion.div>
-
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {/* Total Students */}
-          <motion.div
-            className="bg-blue-50 overflow-hidden shadow-lg rounded-2xl"
-            variants={fadeInUp}
-            initial="initial"
-            animate="animate"
-          >
-            <div className="px-6 py-8">
-              <h3 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center">
-                <GraduationCap className="mr-3 h-6 w-6 text-blue-600" />
-                Total Students
-              </h3>
-              <p className="text-gray-700">{stats.students} Students Registered</p>
+      {/* Features Section */}
+      <div>
+        <h2 className="text-3xl font-semibold text-gray-800 mb-6">Admin Features</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {/* Feature Card */}
+          <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+            <div className="flex items-center space-x-4">
+              <UserCheck className="text-blue-500 w-8 h-8" />
+              <h3 className="text-xl font-semibold text-gray-800">Manage Teachers</h3>
             </div>
-          </motion.div>
+            <p className="mt-2 text-gray-600">View, add, or update teacher profiles and their associated details.</p>
+          </div>
 
-          {/* Total Teachers */}
-          <motion.div
-            className="bg-green-50 overflow-hidden shadow-lg rounded-2xl"
-            variants={fadeInUp}
-            initial="initial"
-            animate="animate"
-            transition={{ delay: 0.2 }}
-          >
-            <div className="px-6 py-8">
-              <h3 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center">
-                <Users className="mr-3 h-6 w-6 text-green-600" />
-                Total Teachers
-              </h3>
-              <p className="text-gray-700">{stats.teachers} Teachers Available</p>
+          {/* Feature Card */}
+          <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+            <div className="flex items-center space-x-4">
+              <BookOpen className="text-green-500 w-8 h-8" />
+              <h3 className="text-xl font-semibold text-gray-800">Manage Courses</h3>
             </div>
-          </motion.div>
+            <p className="mt-2 text-gray-600">Create, update, or delete courses to keep the curriculum updated.</p>
+          </div>
+
+          {/* Feature Card */}
+          <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+            <div className="flex items-center space-x-4">
+              <ClipboardList className="text-purple-500 w-8 h-8" />
+              <h3 className="text-xl font-semibold text-gray-800">Monitor Reports</h3>
+            </div>
+            <p className="mt-2 text-gray-600">Access detailed reports and performance analytics for better insights.</p>
+          </div>
+
+          {/* Feature Card */}
+          <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+            <div className="flex items-center space-x-4">
+              <BarChart className="text-red-500 w-8 h-8" />
+              <h3 className="text-xl font-semibold text-gray-800">View Analytics</h3>
+            </div>
+            <p className="mt-2 text-gray-600">Analyze data to make informed decisions for the platform.</p>
+          </div>
+
+          {/* Feature Card */}
+          <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+            <div className="flex items-center space-x-4">
+              <Settings className="text-yellow-500 w-8 h-8" />
+              <h3 className="text-xl font-semibold text-gray-800">Settings</h3>
+            </div>
+            <p className="mt-2 text-gray-600">Configure platform settings and customize features as needed.</p>
+          </div>
         </div>
-
-        {/* Notifications */}
-        <motion.div
-          className="mt-12 p-6 bg-purple-50 rounded-lg shadow-md"
-          variants={fadeInUp}
-          initial="initial"
-          animate="animate"
-          transition={{ delay: 0.4 }}
-        >
-          <h2 className="text-2xl font-semibold text-gray-900 mb-4">Notifications</h2>
-          {notifications.length > 0 ? (
-            <ul className="list-disc list-inside text-gray-700">
-              {notifications.map((note, index) => (
-                <li key={index}>{note}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-gray-700">No new notifications.</p>
-          )}
-        </motion.div>
-
-        {/* Upcoming Events */}
-        <motion.div
-          className="mt-12 p-6 bg-yellow-50 rounded-lg shadow-md"
-          variants={fadeInUp}
-          initial="initial"
-          animate="animate"
-          transition={{ delay: 0.6 }}
-        >
-          <h2 className="text-2xl font-semibold text-gray-900 mb-4">Upcoming Events</h2>
-          <p className="text-gray-700">No upcoming events scheduled.</p>
-        </motion.div>
-      </main>
+      </div>
     </div>
   );
 };
